@@ -66,5 +66,17 @@ async def file_page(request: Request, file_code: str):
 
 @app.get("/download/{file_code}")
 async def download_file(file_code: str):
-    print("DOWNLOAD ROUTE HIT")
-    return {"status": "download route reached", "code": file_code}
+
+    print("STEP 1")
+
+    file = await files.find_one({"_id": file_code})
+
+    print("STEP 2")
+
+    print(file)
+
+    return {
+        "chat_id": file["chat_id"],
+        "message_id": file["message_id"],
+        "file_name": file["file_name"]
+    }
