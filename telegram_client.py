@@ -1,4 +1,4 @@
-from pyrogram import Client
+from hydrogram import Client
 from config import Config
 
 bot = Client(
