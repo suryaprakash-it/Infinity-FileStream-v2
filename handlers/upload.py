@@ -1,9 +1,11 @@
 from pyrogram import filters
-from database import files
 from secrets import token_urlsafe
+
+from database import files
 from config import Config
 
 async def upload_handler(client, message):
+
     media = (
         message.document
         or message.video
@@ -14,19 +16,20 @@ async def upload_handler(client, message):
     if not media:
         return
 
-    file_id = media.file_id
     file_name = getattr(media, "file_name", "Photo")
     file_size = media.file_size
 
-    uid = token_urlsafe(6)
+    file_code = token_urlsafe(6)
 
     await files.insert_one({
-        "_id": uid,
-        "file_id": file_id,
-        "file_name": file_name
+        "_id": file_code,
+        "chat_id": message.chat.id,
+        "message_id": message.id,
+        "file_name": file_name,
+        "file_size": file_size
     })
 
-    link = f"{Config.BASE_URL}/file/{uid}"
+    link = f"{Config.BASE_URL}/file/{file_code}"
 
     await message.reply_text(
         f"✅ File Uploaded!\n\n"
@@ -34,6 +37,7 @@ async def upload_handler(client, message):
         f"📦 {file_size} bytes\n\n"
         f"🔗 {link}"
     )
+
 
 def register(app):
     app.on_message(
