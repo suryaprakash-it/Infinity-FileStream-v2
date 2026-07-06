@@ -72,3 +72,4 @@ async def download_file(file_code: str):
         filename=file["file_name"],
         media_type="application/octet-stream"
     )
+)
