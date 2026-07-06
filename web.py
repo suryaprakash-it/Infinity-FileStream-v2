@@ -75,4 +75,38 @@ async def download_file(file_code: str):
             )
 
         print("========== DOWNLOAD START ==========")
-        print("DATABASE
+        print("DATABASE:", file)
+
+        msg = await bot.get_messages(
+            file["chat_id"],
+            file["message_id"]
+        )
+
+        print("MESSAGE:", msg)
+
+        os.makedirs("downloads", exist_ok=True)
+
+        path = await bot.download_media(
+            msg,
+            file_name=f"downloads/{file['file_name']}"
+        )
+
+        print("DOWNLOADED TO:", path)
+        print("========== DOWNLOAD END ==========")
+
+        return FileResponse(
+            path=path,
+            filename=file["file_name"],
+            media_type="application/octet-stream"
+        )
+
+    except Exception as e:
+        print("========== DOWNLOAD ERROR ==========")
+        print(e)
+        import traceback
+        traceback.print_exc()
+
+        return HTMLResponse(
+            f"<h2>Download Error</h2><pre>{e}</pre>",
+            status_code=500
+        )
