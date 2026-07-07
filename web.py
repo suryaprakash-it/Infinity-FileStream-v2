@@ -64,7 +64,8 @@ async def file_page(request: Request, file_code: str):
         }
     )
 
-@app.get("/download/{file_code}")
+
+                @app.get("/download/{file_code}")
 async def download_file(request: Request, file_code: str):
     async with download_semaphore:
         try:
@@ -78,38 +79,44 @@ async def download_file(request: Request, file_code: str):
             if not media:
                 return {"error": "No media found"}
 
-            file_size = file["file_size"]
+            file_size = int(file["file_size"])
             range_header = request.headers.get("Range")
             
+            # Default to full file
             start = 0
             end = file_size - 1
             status_code = 200
 
             if range_header:
-                start_str, end_str = range_header.replace("bytes=", "").split("-")
-                start = int(start_str) if start_str else 0
-                end = int(end_str) if end_str else file_size - 1
-                status_code = 206
+                # Range: bytes=start-end
+                try:
+                    parts = range_header.replace("bytes=", "").split("-")
+                    start = int(parts[0]) if parts[0] else 0
+                    end = int(parts[1]) if parts[1] else file_size - 1
+                    status_code = 206
+                except:
+                    pass
 
             chunk_size = (end - start) + 1
 
             async def file_stream():
+                # We pass the offset directly to bot.stream_media
                 async for chunk in bot.stream_media(media, offset=start, limit=chunk_size):
                     yield chunk
+
+            headers = {
+                "Content-Disposition": f'attachment; filename="{file["file_name"]}"',
+                "Accept-Ranges": "bytes",
+                "Content-Range": f"bytes {start}-{end}/{file_size}",
+                "Content-Length": str(chunk_size),
+                "Content-Type": "application/octet-stream"
+            }
 
             return StreamingResponse(
                 file_stream(),
                 status_code=status_code,
-                media_type="application/octet-stream",
-                headers={
-                    "Content-Disposition": f'attachment; filename="{file["file_name"]}"',
-                    "Accept-Ranges": "bytes",
-                    "Content-Range": f"bytes {start}-{end}/{file_size}",
-                    "Content-Length": str(chunk_size),
-                    "Connection": "keep-alive"
-                }
+                headers=headers
             )
         except Exception as e:
-            import traceback
-            traceback.print_exc()
-            return {"error": str(e)}
+            print(f"Error in download: {e}")
+            return {"error": "Download failed"}
