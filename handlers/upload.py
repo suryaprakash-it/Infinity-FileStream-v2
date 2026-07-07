@@ -21,11 +21,15 @@ async def upload_handler(client, message):
         return
 
     try:
-        # 3. Copy to storage channel - ENSURE ID IS INT
-        target_chat = int(Config.STORAGE_CHAT_ID)
-        copied = await message.copy(target_chat)
+        # 3. Dynamic target chat resolution
+        # This resolves the chat ID at the moment of upload, which is 
+        # the most stable way to handle private channels.
+        target_id = int(Config.STORAGE_CHAT_ID)
         
-        # 4. Determine media properties from the stored copy
+        # Perform the copy
+        copied = await message.copy(target_id)
+
+        # 4. Determine media properties
         storage_media = (
             copied.document
             or copied.video
@@ -63,7 +67,7 @@ async def upload_handler(client, message):
 
         # 7. Generate link and update user
         link = f"{Config.BASE_URL}/file/{file_code}"
-        
+
         await status_msg.edit_text(
             f"✅ **File Stored!**\n\n"
             f"📄 `{file_name}`\n"
