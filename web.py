@@ -17,12 +17,12 @@ async def lifespan(app: FastAPI):
     try:
         register_handlers(bot)
         await bot.start()
-        
+
         # --- THE AMNESIA CURE ---
         # We manually inject the secret peer into the bot's database on startup
         target_id = int(Config.STORAGE_CHAT_ID)
         access_hash_str = os.environ.get("CHANNEL_ACCESS_HASH")
-        
+
         if access_hash_str:
             access_hash = int(access_hash_str)
             # This forces Pyrogram to remember the private channel!
@@ -67,29 +67,55 @@ async def file_page(request: Request, file_code: str):
     )
 
 @app.get("/download/{file_code}")
-async def download_file(file_code: str):
+async def download_file(request: Request, file_code: str):
     try:
         file = await files.find_one({"_id": file_code})
         if not file:
             return {"error": "File not found"}
 
         msg = await bot.get_messages(int(file["chat_id"]), int(file["message_id"]))
-        
+
         media = msg.document or msg.video or msg.audio or msg.photo
         if not media:
             return {"error": "No media found in message"}
 
+        file_size = file["file_size"]
+
+        # --- 🚀 HTTP RANGE HANDLING 🚀 ---
+        # This makes downloads resumable and allows seeking in video players
+        range_header = request.headers.get("Range")
+        start = 0
+        end = file_size - 1
+        status_code = 200
+
+        if range_header:
+            # Parse the requested byte range
+            start_str, end_str = range_header.replace("bytes=", "").split("-")
+            start = int(start_str) if start_str else 0
+            end = int(end_str) if end_str else file_size - 1
+            status_code = 206  # 206 Partial Content
+
+        # Calculate exact chunk size
+        chunk_size = (end - start) + 1
+
+        # Stream only the requested chunk
         async def file_stream():
-            async for chunk in bot.stream_media(media):
+            async for chunk in bot.stream_media(media, offset=start, limit=chunk_size):
                 yield chunk
+
+        # Send standard streaming headers + range support headers
+        headers = {
+            "Content-Disposition": f'attachment; filename="{file["file_name"]}"',
+            "Accept-Ranges": "bytes",
+            "Content-Range": f"bytes {start}-{end}/{file_size}",
+            "Content-Length": str(chunk_size)
+        }
 
         return StreamingResponse(
             file_stream(),
+            status_code=status_code,
             media_type="application/octet-stream",
-            headers={
-                "Content-Disposition": f'attachment; filename="{file["file_name"]}"',
-                "Content-Length": str(file["file_size"])
-            }
+            headers=headers
         )
 
     except Exception as e:
