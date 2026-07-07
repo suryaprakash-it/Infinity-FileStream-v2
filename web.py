@@ -17,7 +17,6 @@ async def lifespan(app: FastAPI):
     print("🤖 Starting Bot...")
 
     register_handlers(bot)
-
     await bot.start()
 
     print("✅ Bot Started!")
@@ -25,7 +24,6 @@ async def lifespan(app: FastAPI):
     yield
 
     print("🛑 Stopping Bot...")
-
     await bot.stop()
 
 
@@ -71,40 +69,45 @@ async def download_file(file_code: str):
 
     try:
         file = await files.find_one({"_id": file_code})
-        print(file)
 
-        media = (
-    msg.document
-    or msg.video
-    or msg.audio
-    or msg.photo
-)
+        if not file:
+            return {"error": "File not found"}
 
-if not media:
-    return {"error": "No media found"}
+        print("DATABASE =", file)
 
-path = await bot.download_media(
-    media,
-    file_name=f"downloads/{file['file_name']}"
-)
-
-print("PATH =", path)
-
-return FileResponse(
-    path,
-    filename=file["file_name"],
-    media_type="application/octet-stream"
-)
+        msg = await bot.get_messages(
+            file["chat_id"],
+            file["message_id"]
+        )
 
         print("MESSAGE =", msg)
 
-        path = await bot.download_media(msg)
+        media = (
+            msg.document
+            or msg.video
+            or msg.audio
+            or msg.photo
+        )
 
-        print("PATH =", path)
+        if not media:
+            return {"error": "No media found"}
 
-        return {
-            "path": path
-        }
+        os.makedirs("downloads", exist_ok=True)
+
+        print("ABOUT TO DOWNLOAD...")
+
+        path = await bot.download_media(
+            media,
+            file_name=f"downloads/{file['file_name']}"
+        )
+
+        print("DOWNLOADED PATH =", path)
+
+        return FileResponse(
+            path,
+            filename=file["file_name"],
+            media_type="application/octet-stream"
+        )
 
     except Exception as e:
         import traceback
