@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
@@ -8,7 +9,6 @@ from handlers import register_handlers
 from database import files
 from config import Config
 
-# Initialize templates
 templates = Jinja2Templates(directory="templates")
 
 @asynccontextmanager
@@ -17,7 +17,18 @@ async def lifespan(app: FastAPI):
     try:
         register_handlers(bot)
         await bot.start()
-        # Removed the get_dialogs() loop because Bots cannot use it.
+        
+        # --- THE AMNESIA CURE ---
+        # We manually inject the secret peer into the bot's database on startup
+        target_id = int(Config.STORAGE_CHAT_ID)
+        access_hash_str = os.environ.get("CHANNEL_ACCESS_HASH")
+        
+        if access_hash_str:
+            access_hash = int(access_hash_str)
+            # This forces Pyrogram to remember the private channel!
+            await bot.storage.update_peers([(target_id, access_hash, "channel", None, None)])
+            print("✅ Private Channel Memory Injected!")
+
         print("✅ Bot Started Successfully!")
     except Exception as e:
         print(f"❌ Critical Startup Error: {e}")
@@ -62,15 +73,12 @@ async def download_file(file_code: str):
         if not file:
             return {"error": "File not found"}
 
-        # Fetch the message dynamically
         msg = await bot.get_messages(int(file["chat_id"]), int(file["message_id"]))
         
-        # Determine media type
         media = msg.document or msg.video or msg.audio or msg.photo
         if not media:
             return {"error": "No media found in message"}
 
-        # Stream directly from Telegram
         async def file_stream():
             async for chunk in bot.stream_media(media):
                 yield chunk
