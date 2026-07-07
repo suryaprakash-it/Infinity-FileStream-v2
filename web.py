@@ -17,15 +17,7 @@ async def lifespan(app: FastAPI):
     try:
         register_handlers(bot)
         await bot.start()
-        
-        # Ensure STORAGE_CHAT_ID is an integer for Pyrogram resolution
-        storage_id = int(Config.STORAGE_CHAT_ID)
-        
-        # Warm up the session to prevent 'Peer id invalid' errors
-        chat = await bot.get_chat(storage_id)
-        print(f"✅ Successfully resolved storage channel: {chat.title}")
-        
-        print("✅ Bot Started Successfully!")
+        print("✅ Bot Started Successfully! (Storage resolution is dynamic).")
     except Exception as e:
         print(f"❌ Critical Startup Error: {e}")
         raise e
@@ -69,8 +61,9 @@ async def download_file(file_code: str):
         if not file:
             return {"error": "File not found"}
 
-        # Fetch the message from storage channel
-        msg = await bot.get_messages(file["chat_id"], file["message_id"])
+        # Fetch the message dynamically. 
+        # This resolves the chat ID on the fly if it wasn't cached.
+        msg = await bot.get_messages(int(file["chat_id"]), int(file["message_id"]))
         
         # Determine media type
         media = msg.document or msg.video or msg.audio or msg.photo
