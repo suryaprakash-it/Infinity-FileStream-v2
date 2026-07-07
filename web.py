@@ -73,10 +73,28 @@ async def download_file(file_code: str):
         file = await files.find_one({"_id": file_code})
         print(file)
 
-        msg = await bot.get_messages(
-            file["chat_id"],
-            file["message_id"]
-        )
+        media = (
+    msg.document
+    or msg.video
+    or msg.audio
+    or msg.photo
+)
+
+if not media:
+    return {"error": "No media found"}
+
+path = await bot.download_media(
+    media,
+    file_name=f"downloads/{file['file_name']}"
+)
+
+print("PATH =", path)
+
+return FileResponse(
+    path,
+    filename=file["file_name"],
+    media_type="application/octet-stream"
+)
 
         print("MESSAGE =", msg)
 
