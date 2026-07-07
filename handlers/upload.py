@@ -7,6 +7,8 @@ from config import Config
 
 async def upload_handler(client, message):
 
+    print("1️⃣ Upload received")
+
     media = (
         message.document
         or message.video
@@ -15,13 +17,15 @@ async def upload_handler(client, message):
     )
 
     if not media:
+        print("❌ No media")
         return
 
-    # Copy file to storage channel/group
     try:
+        print("2️⃣ Copying to storage...")
+
         copied = await message.copy(Config.STORAGE_CHAT_ID)
 
-        print("✅ Copied Successfully")
+        print("3️⃣ Copy completed")
         print("Storage Chat ID:", copied.chat.id)
         print("Storage Message ID:", copied.id)
 
@@ -60,6 +64,8 @@ async def upload_handler(client, message):
 
     file_code = token_urlsafe(6)
 
+    print("4️⃣ Saving to MongoDB...")
+
     await files.insert_one({
         "_id": file_code,
         "chat_id": copied.chat.id,
@@ -68,7 +74,11 @@ async def upload_handler(client, message):
         "file_size": file_size
     })
 
+    print("5️⃣ MongoDB saved")
+
     link = f"{Config.BASE_URL}/file/{file_code}"
+
+    print("6️⃣ Sending reply...")
 
     await message.reply_text(
         f"✅ File Stored!\n\n"
@@ -76,6 +86,8 @@ async def upload_handler(client, message):
         f"📦 {file_size} bytes\n\n"
         f"🔗 {link}"
     )
+
+    print("7️⃣ Done")
 
 
 def register(app):
