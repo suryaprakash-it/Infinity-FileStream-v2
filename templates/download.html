@@ -75,7 +75,7 @@
             margin-bottom: 20px;
             border: 1px solid rgba(255,255,255,0.05);
         }
-        
+
         .stream-title {
             font-size: 12px;
             text-transform: uppercase;
@@ -85,7 +85,7 @@
         }
 
         .btn-group { display: flex; gap: 10px; }
-        
+
         .btn-app {
             flex: 1;
             padding: 12px;
@@ -165,9 +165,12 @@
 
     // 2. Smart Media Detector
     const fileName = "{{ file_name }}".toLowerCase();
-    const streamUrl = window.location.origin + "/download/{{ file_code }}"; // Full URL needed for external apps
+    const streamUrl = window.location.origin + "/download/{{ file_code }}"; 
     
-    // If it's a browser-friendly video
+    // Strip the https:// for Android Intents
+    const urlWithoutScheme = streamUrl.replace(/^https?:\/\//, '');
+
+    // If it's a browser-friendly video (MP4/WebM)
     if (fileName.endsWith('.mp4') || fileName.endsWith('.webm')) {
         document.getElementById('video-container').style.display = 'block';
         document.getElementById('video-player').src = streamUrl;
@@ -177,11 +180,11 @@
     else if (fileName.endsWith('.mkv') || fileName.endsWith('.avi') || fileName.endsWith('.hevc')) {
         document.getElementById('stream-options').style.display = 'block';
         
-        // Android/iOS Deep Links
-        document.getElementById('vlc-link').href = "vlc://" + streamUrl;
+        // VLC Android Intent
+        document.getElementById('vlc-link').href = `intent://${urlWithoutScheme}#Intent;scheme=https;package=org.videolan.vlc;end`;
         
-        // MX Player Intent (Android)
-        document.getElementById('mx-link').href = "intent:" + streamUrl + "#Intent;package=com.mxtech.videoplayer.ad;S.title={{ file_name }};end";
+        // MX Player (Free) Intent
+        document.getElementById('mx-link').href = `intent://${urlWithoutScheme}#Intent;scheme=https;package=com.mxtech.videoplayer.ad;end`;
         
         document.getElementById('download-btn').innerText = 'Direct Download';
     }
