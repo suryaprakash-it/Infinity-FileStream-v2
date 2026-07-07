@@ -22,12 +22,15 @@ async def upload_handler(client, message):
 
     try:
         # 3. Dynamic target chat resolution
-        # This resolves the chat ID at the moment of upload, which is 
-        # the most stable way to handle private channels.
         target_id = int(Config.STORAGE_CHAT_ID)
         
-        # Perform the copy
-        copied = await message.copy(target_id)
+        # FIX: Explicitly resolve the chat object first.
+        # This registers the supergroup ID in the Pyrogram session cache
+        # so that the copy operation doesn't throw 'Peer id invalid'.
+        chat = await client.get_chat(target_id)
+        
+        # Perform the copy to the resolved chat object's ID
+        copied = await message.copy(chat.id)
 
         # 4. Determine media properties
         storage_media = (
