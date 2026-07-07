@@ -16,13 +16,13 @@ def format_size(size_bytes):
     return f"{s} {size_name[i]}"
 
 async def upload_handler(client, message):
-    # (Keep your existing code for steps 1 through 6 exactly the same)
+    # Added quote=False to remove the reply box, and updated to a cooler status message
+    status_msg = await message.reply_text("⏳ **Initializing Upload Sequence...**", quote=False)
     
-    status_msg = await message.reply_text("⏳ Processing your file...")
     media = (message.document or message.video or message.audio or message.photo)
-    
+
     if not media:
-        await status_msg.edit_text("❌ No valid media found.")
+        await status_msg.edit_text("❌ **Upload Failed:** No valid media found.")
         return
 
     try:
@@ -59,27 +59,23 @@ async def upload_handler(client, message):
         })
 
         link = f"{Config.BASE_URL}/file/{file_code}"
-        
-        # --- THIS IS THE CHANGED SECTION ---
-        # 7. Convert size and format the text without backticks
         readable_size = format_size(file_size)
 
+        # Sleek, branded output message
         await status_msg.edit_text(
-            f"✅ **File Stored Successfully!**\n\n"
-            f"**File Name:** {file_name}\n"
-            f"**File Size:** {readable_size}\n\n"
-            f"🔗 {link}"
+            f"⚡️ **INFINITY UPLOAD COMPLETE** ⚡️\n\n"
+            f"📁 **Name:** {file_name}\n"
+            f"📊 **Size:** {readable_size}\n\n"
+            f"🔗 **Direct Link:**\n{link}"
         )
 
     except Exception as e:
         import traceback
         traceback.print_exc()
-        await status_msg.edit_text(f"❌ Copy Failed!\n\n{e}")
+        await status_msg.edit_text(f"❌ **System Error:** Copy Failed!\n\n`{e}`")
 
 def register(app):
+    # Added filters.private so it only responds in DMs, keeping groups clean
     app.on_message(
-        filters.document
-        | filters.video
-        | filters.audio
-        | filters.photo
+        (filters.document | filters.video | filters.audio | filters.photo) & filters.private
     )(upload_handler)
