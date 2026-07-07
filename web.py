@@ -64,8 +64,7 @@ async def file_page(request: Request, file_code: str):
         }
     )
 
-
-                @app.get("/download/{file_code}")
+@app.get("/download/{file_code}")
 async def download_file(request: Request, file_code: str):
     async with download_semaphore:
         try:
@@ -75,20 +74,19 @@ async def download_file(request: Request, file_code: str):
 
             msg = await bot.get_messages(int(file["chat_id"]), int(file["message_id"]))
             media = msg.document or msg.video or msg.audio or msg.photo
-            
+
             if not media:
                 return {"error": "No media found"}
 
             file_size = int(file["file_size"])
             range_header = request.headers.get("Range")
-            
+
             # Default to full file
             start = 0
             end = file_size - 1
             status_code = 200
 
             if range_header:
-                # Range: bytes=start-end
                 try:
                     parts = range_header.replace("bytes=", "").split("-")
                     start = int(parts[0]) if parts[0] else 0
@@ -100,7 +98,6 @@ async def download_file(request: Request, file_code: str):
             chunk_size = (end - start) + 1
 
             async def file_stream():
-                # We pass the offset directly to bot.stream_media
                 async for chunk in bot.stream_media(media, offset=start, limit=chunk_size):
                     yield chunk
 
