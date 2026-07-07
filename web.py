@@ -8,6 +8,7 @@ from handlers import register_handlers
 from database import files
 from config import Config
 
+# Initialize templates
 templates = Jinja2Templates(directory="templates")
 
 @asynccontextmanager
@@ -21,6 +22,7 @@ async def lifespan(app: FastAPI):
         # WARM-UP HACK: 
         # By iterating through the bot's dialogs, we force Pyrogram to download 
         # the secret access_hashes for all private groups it belongs to.
+        # This permanently fixes the 'Peer id invalid' error for private channels.
         async for dialog in bot.get_dialogs(limit=50):
             pass 
             
@@ -68,12 +70,15 @@ async def download_file(file_code: str):
         if not file:
             return {"error": "File not found"}
 
+        # Fetch the message dynamically
         msg = await bot.get_messages(int(file["chat_id"]), int(file["message_id"]))
         
+        # Determine media type
         media = msg.document or msg.video or msg.audio or msg.photo
         if not media:
             return {"error": "No media found in message"}
 
+        # Stream directly from Telegram
         async def file_stream():
             async for chunk in bot.stream_media(media):
                 yield chunk
