@@ -12,7 +12,7 @@ class Config:
 
     BASE_URL = os.getenv("BASE_URL")
 
-    STORAGE_CHAT_ID = -1003753074930
+    STORAGE_CHAT_ID =  -1004309324849
 
     ADMINS = [
         int(x)
