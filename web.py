@@ -1,55 +1,48 @@
 from contextlib import asynccontextmanager
 import os
-
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
 from telegram_client import bot
 from handlers import register_handlers
 from database import files
 
+# Initialize templates
 templates = Jinja2Templates(directory="templates")
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("🤖 Starting Bot...")
-
-    register_handlers(bot)
-    await bot.start()
-
-    print("✅ Bot Started!")
+    try:
+        register_handlers(bot)
+        await bot.start()
+        print("✅ Bot Started!")
+    except Exception as e:
+        print(f"❌ Failed to start bot: {e}")
+        raise e
 
     yield
 
     print("🛑 Stopping Bot...")
     await bot.stop()
-
+    print("✅ Bot Stopped.")
 
 app = FastAPI(
     title="Infinity FileStream",
     lifespan=lifespan
 )
 
-
 @app.get("/")
 async def home():
     return {"status": "online"}
 
-
 @app.get("/file/{file_code}", response_class=HTMLResponse)
 async def file_page(request: Request, file_code: str):
-
-    print("FILE PAGE:", file_code)
-
     file = await files.find_one({"_id": file_code})
 
     if not file:
-        return HTMLResponse(
-            "<h2>❌ File Not Found</h2>",
-            status_code=404
-        )
+        return HTMLResponse("<h2>❌ File Not Found</h2>", status_code=404)
 
     return templates.TemplateResponse(
         "download.html",
@@ -61,65 +54,36 @@ async def file_page(request: Request, file_code: str):
         }
     )
 
-
 @app.get("/download/{file_code}")
 async def download_file(file_code: str):
-
-    print("DOWNLOAD START")
-
     try:
         file = await files.find_one({"_id": file_code})
-
         if not file:
             return {"error": "File not found"}
 
-        print("DATABASE =", file)
-
-        print("CHAT ID =", file["chat_id"])
-        print("MESSAGE ID =", file["message_id"])
-
-        chat = await bot.get_chat(file["chat_id"])
-        print("CHAT =", chat)
-
-        msg = await bot.get_messages(
-            file["chat_id"],
-            file["message_id"]
-        )
-
-        print("MESSAGE =", msg)
-
-        media = (
-            msg.document
-            or msg.video
-            or msg.audio
-            or msg.photo
-        )
-
+        # Fetch the message from storage channel
+        msg = await bot.get_messages(file["chat_id"], file["message_id"])
+        
+        # Determine media type
+        media = msg.document or msg.video or msg.audio or msg.photo
         if not media:
-            return {"error": "No media found"}
+            return {"error": "No media found in message"}
 
-        os.makedirs("downloads", exist_ok=True)
+        # Stream directly from Telegram without saving to local disk
+        async def file_stream():
+            async for chunk in bot.stream_media(media):
+                yield chunk
 
-        print("ABOUT TO DOWNLOAD...")
-
-        path = await bot.download_media(
-            media,
-            file_name=f"downloads/{file['file_name']}"
-        )
-
-        print("DOWNLOADED PATH =", path)
-
-        return FileResponse(
-            path,
-            filename=file["file_name"],
-            media_type="application/octet-stream"
+        return StreamingResponse(
+            file_stream(),
+            media_type="application/octet-stream",
+            headers={
+                "Content-Disposition": f'attachment; filename="{file["file_name"]}"',
+                "Content-Length": str(file["file_size"])
+            }
         )
 
     except Exception as e:
         import traceback
         traceback.print_exc()
-        print("ERROR:", repr(e))
-
-        return {
-            "error": str(e)
-        }
+        return {"error": str(e)}
