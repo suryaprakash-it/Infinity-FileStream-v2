@@ -2,30 +2,145 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Download: {{ file_name }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity Stream | {{ file_name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        body { text-align: center; font-family: 'Segoe UI', Arial, sans-serif; padding: 50px; background: #f4f4f9; }
-        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: inline-block; }
-        .btn { padding: 15px 30px; font-size: 18px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; display: inline-block; }
-        .btn:hover { background: #0056b3; }
-        .size { color: #666; margin-bottom: 20px; }
+        :root {
+            --neon-red: #ff003c;
+            --dark-bg: #0a0a0c;
+            --card-bg: rgba(20, 20, 25, 0.7);
+            --text-main: #ffffff;
+            --text-muted: #8b8b99;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body { 
+            text-align: center; 
+            font-family: 'Inter', sans-serif; 
+            background: var(--dark-bg);
+            background-image: radial-gradient(circle at 50% 0%, rgba(255, 0, 60, 0.15), transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .glass-card { 
+            background: var(--card-bg); 
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 40px 30px; 
+            border-radius: 16px; 
+            border: 1px solid rgba(255, 0, 60, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255, 0, 60, 0.05);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .brand {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            color: var(--neon-red);
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(255, 0, 60, 0.5);
+        }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 500;
+            word-wrap: break-word;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .size { 
+            color: var(--text-muted); 
+            font-size: 14px;
+            margin-bottom: 30px; 
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+
+        /* Video Player Styling */
+        .video-container {
+            display: none; /* Hidden by default, JS reveals it */
+            margin-bottom: 30px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        video {
+            width: 100%;
+            display: block;
+            background: #000;
+        }
+
+        /* Custom Button */
+        .btn { 
+            padding: 16px 32px; 
+            font-size: 16px; 
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(45deg, var(--neon-red), #cc0030); 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            text-decoration: none; 
+            display: inline-block; 
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 0, 60, 0.3);
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 0, 60, 0.5);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
     </style>
 </head>
 <body>
 
-<div class="card">
+<div class="glass-card">
+    <div class="brand">Infinity</div>
     <h2>{{ file_name }}</h2>
     <p class="size" id="size-text"></p>
-    
-    <a href="/download/{{ file_code }}" class="btn" onclick="this.innerText='Downloading...'; this.style.opacity='0.6';">
-        Download Now
+
+    <!-- Smart Video Player -->
+    <div class="video-container" id="video-container">
+        <video id="video-player" controls playsinline>
+            Your browser does not support the video tag.
+        </video>
+    </div>
+
+    <a href="/download/{{ file_code }}" class="btn" id="download-btn" onclick="this.innerHTML='Initiating Transfer...'; this.style.opacity='0.8';">
+        Download File
     </a>
 </div>
 
 <script>
-    // Format bytes to readable format
+    // 1. Format bytes to a highly readable format
     const bytes = {{ file_size }};
-    const units = ['B', 'KB', 'MB', 'GB'];
+    const units = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
     let val = bytes;
     let unitIndex = 0;
     while (val >= 1024 && unitIndex < units.length - 1) {
@@ -33,6 +148,23 @@
         unitIndex++;
     }
     document.getElementById('size-text').innerText = val.toFixed(2) + ' ' + units[unitIndex];
+
+    // 2. Smart Media Detector
+    const fileName = "{{ file_name }}".toLowerCase();
+    const videoUrl = "/download/{{ file_code }}";
+    
+    // Check if the file is a web-friendly video format
+    if (fileName.endsWith('.mp4') || fileName.endsWith('.webm') || fileName.endsWith('.ogg')) {
+        document.getElementById('video-container').style.display = 'block';
+        document.getElementById('video-player').src = videoUrl;
+        document.getElementById('download-btn').innerText = 'Download Video';
+    } 
+    // Audio support bonus!
+    else if (fileName.endsWith('.mp3') || fileName.endsWith('.wav') || fileName.endsWith('.m4a')) {
+        document.getElementById('video-container').style.display = 'block';
+        document.getElementById('video-player').outerHTML = `<audio id="audio-player" controls src="${videoUrl}" style="width: 100%; margin-bottom: 20px;"></audio>`;
+        document.getElementById('download-btn').innerText = 'Download Audio';
+    }
 </script>
 
 </body>
