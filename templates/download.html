@@ -32,11 +32,10 @@
         .glass-card { 
             background: var(--card-bg); 
             backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
             padding: 40px 30px; 
             border-radius: 16px; 
             border: 1px solid rgba(255, 0, 60, 0.2);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255, 0, 60, 0.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             max-width: 500px;
             width: 100%;
         }
@@ -49,80 +48,26 @@
             color: var(--neon-red);
             text-transform: uppercase;
             margin-bottom: 20px;
-            text-shadow: 0 0 10px rgba(255, 0, 60, 0.5);
         }
 
-        h2 { font-size: 18px; font-weight: 500; word-wrap: break-word; margin-bottom: 10px; line-height: 1.4; }
-        .size { color: var(--text-muted); font-size: 14px; margin-bottom: 25px; font-weight: 500; }
+        h2 { font-size: 18px; font-weight: 500; margin-bottom: 10px; }
+        .size { color: var(--text-muted); font-size: 14px; margin-bottom: 25px; }
 
-        /* Video Player Styling */
-        .video-container {
-            display: none; 
-            margin-bottom: 20px;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-        video { width: 100%; display: block; background: #000; }
+        .video-container, .stream-options { display: none; margin-bottom: 20px; }
+        video { width: 100%; border-radius: 12px; }
 
-        /* External Stream Buttons */
-        .stream-options {
-            display: none; 
-            background: rgba(0,0,0,0.3);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255,255,255,0.05);
+        .btn-group { display: flex; gap: 10px; margin-bottom: 10px; }
+        .btn-app, .btn-main, .btn-copy {
+            padding: 14px; font-size: 14px; font-weight: 600;
+            border-radius: 8px; cursor: pointer; border: none;
+            transition: 0.3s; width: 100%;
         }
 
-        .stream-title {
-            font-size: 12px;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin-bottom: 10px;
-            letter-spacing: 1px;
-        }
-
-        .btn-group { display: flex; gap: 10px; }
-
-        .btn-app {
-            flex: 1;
-            padding: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            background: rgba(255,255,255,0.05);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            cursor: pointer;
-            text-decoration: none;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .btn-app:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
-
-        /* Main Download Button */
-        .btn-main { 
-            padding: 16px; 
-            font-size: 16px; 
-            font-weight: 600;
-            background: linear-gradient(45deg, var(--neon-red), #cc0030); 
-            color: white; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            text-decoration: none; 
-            display: block; 
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(255, 0, 60, 0.3);
-            width: 100%;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 0, 60, 0.5); }
+        .btn-main { background: linear-gradient(45deg, var(--neon-red), #cc0030); color: white; margin-bottom: 10px; }
+        .btn-copy { background: rgba(255,255,255,0.1); color: white; }
+        .btn-app { background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); }
+        
+        .btn-main:hover, .btn-copy:hover { opacity: 0.8; }
     </style>
 </head>
 <body>
@@ -132,25 +77,16 @@
     <h2>{{ file_name }}</h2>
     <p class="size" id="size-text"></p>
 
-    <!-- HTML5 Player (For MP4/WebM) -->
     <div class="video-container" id="video-container">
-        <video id="video-player" controls playsinline>
-            Your browser does not support the video tag.
-        </video>
+        <video id="video-player" controls playsinline></video>
     </div>
 
-    <!-- External Streaming (For MKV/AVI) -->
     <div class="stream-options" id="stream-options">
-        <div class="stream-title">Stream without downloading</div>
-        <div class="btn-group">
-            <!-- Dynamically populated by the script below -->
-        </div>
+        <div class="btn-group" id="stream-btns"></div>
     </div>
 
-    <!-- Main Download -->
-    <a href="/download/{{ file_code }}" class="btn-main" id="download-btn" onclick="this.innerHTML='Initiating Transfer...'; this.style.opacity='0.8';">
-        Download File
-    </a>
+    <a href="/download/{{ file_code }}" class="btn-main" id="download-btn">Download File</a>
+    <button class="btn-copy" onclick="copyLink()">📋 Copy Share Link</button>
 </div>
 
 <script>
@@ -159,45 +95,34 @@
     const units = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
     let val = bytes;
     let unitIndex = 0;
-    while (val >= 1024 && unitIndex < units.length - 1) {
-        val /= 1024;
-        unitIndex++;
-    }
+    while (val >= 1024 && unitIndex < units.length - 1) { val /= 1024; unitIndex++; }
     document.getElementById('size-text').innerText = val.toFixed(2) + ' ' + units[unitIndex];
 
-    // 2. Smart Media Detector
+    // 2. Copy Function
+    function copyLink() {
+        navigator.clipboard.writeText(window.location.href);
+        const btn = document.querySelector('.btn-copy');
+        btn.innerText = '✅ Link Copied!';
+        setTimeout(() => btn.innerText = '📋 Copy Share Link', 2000);
+    }
+
+    // 3. Logic
     const fileName = "{{ file_name }}".toLowerCase();
     const streamUrl = window.location.origin + "/download/{{ file_code }}"; 
-    
-    // Strip the https:// for Android Intents
     const urlWithoutScheme = streamUrl.replace(/^https?:\/\//, '');
 
-    // If it's a browser-friendly video (MP4/WebM)
     if (fileName.endsWith('.mp4') || fileName.endsWith('.webm')) {
         document.getElementById('video-container').style.display = 'block';
         document.getElementById('video-player').src = streamUrl;
         document.getElementById('download-btn').innerText = 'Download Video';
     } 
-    // If it's an MKV, AVI, or HEVC (Require External Apps)
     else if (fileName.endsWith('.mkv') || fileName.endsWith('.avi') || fileName.endsWith('.hevc')) {
         document.getElementById('stream-options').style.display = 'block';
-        
-        // Universal Android Chooser (Highly Recommended)
-        const universalIntent = `intent://${urlWithoutScheme}#Intent;scheme=https;type=video/*;action=android.intent.action.VIEW;end`;
-        
-        // VLC Forced Intent
-        const vlcIntent = `intent://${urlWithoutScheme}#Intent;scheme=https;type=video/*;action=android.intent.action.VIEW;package=org.videolan.vlc;end`;
-        
-        // MX Player (Free) Forced Intent
-        const mxIntent = `intent://${urlWithoutScheme}#Intent;scheme=https;type=video/*;action=android.intent.action.VIEW;package=com.mxtech.videoplayer.ad;end`;
-
-        // Update the HTML to include the universal button alongside VLC and MX
-        document.querySelector('.btn-group').innerHTML = `
-            <a href="${universalIntent}" class="btn-app" style="background: rgba(255,0,60,0.2);">📱 Choose</a>
-            <a href="${vlcIntent}" class="btn-app">▶️ VLC</a>
-            <a href="${mxIntent}" class="btn-app">▶️ MX</a>
+        document.getElementById('stream-btns').innerHTML = `
+            <a href="intent://${urlWithoutScheme}#Intent;scheme=https;type=video/*;action=android.intent.action.VIEW;end" class="btn-app">📱 Choose</a>
+            <a href="intent://${urlWithoutScheme}#Intent;scheme=https;type=video/*;action=android.intent.action.VIEW;package=org.videolan.vlc;end" class="btn-app">▶️ VLC</a>
+            <a href="intent://${urlWithoutScheme}#Intent;scheme=https;type=video/*;action=android.intent.action.VIEW;package=com.mxtech.videoplayer.ad;end" class="btn-app">▶️ MX</a>
         `;
-        
         document.getElementById('download-btn').innerText = 'Direct Download';
     }
 </script>
