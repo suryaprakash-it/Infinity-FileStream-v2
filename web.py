@@ -75,51 +75,21 @@ async def download_file(file_code: str):
 
         print("DATABASE =", file)
 
-print("CHAT ID =", file["chat_id"])
-print("MESSAGE ID =", file["message_id"])
+        print("CHAT ID =", file["chat_id"])
+        print("MESSAGE ID =", file["message_id"])
 
-chat = await bot.get_chat(file["chat_id"])
-print("CHAT =", chat)
+        chat = await bot.get_chat(file["chat_id"])
+        print("CHAT =", chat)
 
-msg = await bot.get_messages(
-    file["chat_id"],
-    file["message_id"]
-)
+        msg = await bot.get_messages(
+            file["chat_id"],
+            file["message_id"]
+        )
 
-print("MESSAGE =", msg)
         print("MESSAGE =", msg)
 
         media = (
             msg.document
             or msg.video
             or msg.audio
-            or msg.photo
-        )
-
-        if not media:
-            return {"error": "No media found"}
-
-        os.makedirs("downloads", exist_ok=True)
-
-        print("ABOUT TO DOWNLOAD...")
-
-        path = await bot.download_media(
-            media,
-            file_name=f"downloads/{file['file_name']}"
-        )
-
-        print("DOWNLOADED PATH =", path)
-
-        return FileResponse(
-            path,
-            filename=file["file_name"],
-            media_type="application/octet-stream"
-        )
-
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-
-        return {
-            "error": str(e)
-        }
+           
