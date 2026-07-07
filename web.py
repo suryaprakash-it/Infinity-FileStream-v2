@@ -7,6 +7,7 @@ from fastapi.templating import Jinja2Templates
 from telegram_client import bot
 from handlers import register_handlers
 from database import files
+from config import Config
 
 # Initialize templates
 templates = Jinja2Templates(directory="templates")
@@ -17,9 +18,16 @@ async def lifespan(app: FastAPI):
     try:
         register_handlers(bot)
         await bot.start()
+        
+        # --- WARM-UP: Verify Storage Channel ---
+        # This prevents the ValueError during uploads by caching the chat now
+        chat = await bot.get_chat(Config.STORAGE_CHAT_ID)
+        print(f"✅ Connected to storage channel: {chat.title}")
+        
         print("✅ Bot Started!")
     except Exception as e:
-        print(f"❌ Failed to start bot: {e}")
+        print(f"❌ Critical Startup Error: {e}")
+        # Raising this will stop the app from starting if the configuration is broken
         raise e
 
     yield
