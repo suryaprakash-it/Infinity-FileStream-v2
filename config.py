@@ -12,6 +12,8 @@ class Config:
 
     BASE_URL = os.getenv("BASE_URL")
 
+    STORAGE_CHAT_ID = -1003753074930
+
     ADMINS = [
         int(x)
         for x in os.getenv("ADMINS", "").split()
