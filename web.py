@@ -75,11 +75,18 @@ async def download_file(file_code: str):
 
         print("DATABASE =", file)
 
-        msg = await bot.get_messages(
-            file["chat_id"],
-            file["message_id"]
-        )
+print("CHAT ID =", file["chat_id"])
+print("MESSAGE ID =", file["message_id"])
 
+chat = await bot.get_chat(file["chat_id"])
+print("CHAT =", chat)
+
+msg = await bot.get_messages(
+    file["chat_id"],
+    file["message_id"]
+)
+
+print("MESSAGE =", msg)
         print("MESSAGE =", msg)
 
         media = (
