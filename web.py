@@ -20,7 +20,7 @@ async def lifespan(app: FastAPI):
     try:
         register_handlers(bot)
         await bot.start()
-        
+
         # Inject private channel memory
         target_id = int(Config.STORAGE_CHAT_ID)
         access_hash = int(os.environ.get("CHANNEL_ACCESS_HASH", 0))
@@ -70,17 +70,29 @@ async def download_file(request: Request, file_code: str):
             file_size = int(file["file_size"])
             range_header = request.headers.get("Range")
 
+            # 1. Parse Range Header safely
             start, end = 0, file_size - 1
             status_code = 200
 
             if range_header:
-                parts = range_header.replace("bytes=", "").split("-")
-                start = int(parts[0]) if parts[0] else 0
-                end = int(parts[1]) if parts[1] else file_size - 1
-                status_code = 206
+                try:
+                    parts = range_header.replace("bytes=", "").split("-")
+                    start = int(parts[0]) if parts[0] else 0
+                    end = int(parts[1]) if parts[1] and int(parts[1]) < file_size else file_size - 1
+                    status_code = 206
+                except Exception:
+                    pass
+
+            # 2. Safety Clamping
+            start = max(0, start)
+            end = min(end, file_size - 1)
+            
+            if start >= file_size:
+                return {"error": "Invalid range"}
 
             chunk_size = (end - start) + 1
 
+            # 3. Stream from Telegram
             async def file_stream():
                 async for chunk in bot.stream_media(media, offset=start, limit=chunk_size):
                     yield chunk
