@@ -21,8 +21,9 @@ async def upload_handler(client, message):
         return
 
     try:
-        # 3. Copy to storage channel
-        copied = await message.copy(Config.STORAGE_CHAT_ID)
+        # 3. Copy to storage channel - ENSURE ID IS INT
+        target_chat = int(Config.STORAGE_CHAT_ID)
+        copied = await message.copy(target_chat)
         
         # 4. Determine media properties from the stored copy
         storage_media = (
