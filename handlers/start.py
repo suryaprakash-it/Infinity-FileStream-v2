@@ -1,7 +1,8 @@
+import pyrogram
 from pyrogram import filters
 
 async def start_handler(client, message):
-    # Grab the user's first name for a personalized touch (defaults to 'User' if hidden)
+    # Grab the user's first name for a personalized touch
     user_name = message.from_user.first_name if message.from_user else "User"
 
     # A stylish, Markdown-formatted welcome message
@@ -21,6 +22,9 @@ async def start_handler(client, message):
         quote=False
     )
 
-# CHANGE THIS LINE
 def register_handlers(app):
-    app.add_handler(pyrogram.handlers.MessageHandler(start_handler, filters.command("start") & filters.private))
+    # 'pyrogram' is now defined via the import above
+    app.add_handler(pyrogram.handlers.MessageHandler(
+        start_handler, 
+        filters.command("start") & filters.private
+    ))
