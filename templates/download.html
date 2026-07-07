@@ -9,7 +9,7 @@
         :root {
             --neon-red: #ff003c;
             --dark-bg: #0a0a0c;
-            --card-bg: rgba(20, 20, 25, 0.7);
+            --card-bg: rgba(20, 20, 25, 0.8);
             --text-main: #ffffff;
             --text-muted: #8b8b99;
         }
@@ -20,7 +20,6 @@
             text-align: center; 
             font-family: 'Inter', sans-serif; 
             background: var(--dark-bg);
-            background-image: radial-gradient(circle at 50% 0%, rgba(255, 0, 60, 0.15), transparent 50%);
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
@@ -31,43 +30,85 @@
 
         .glass-card { 
             background: var(--card-bg); 
-            backdrop-filter: blur(12px);
-            padding: 40px 30px; 
-            border-radius: 16px; 
-            border: 1px solid rgba(255, 0, 60, 0.2);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            max-width: 500px;
+            backdrop-filter: blur(15px);
+            padding: 30px; 
+            border-radius: 20px; 
+            border: 1px solid rgba(255, 0, 60, 0.3);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+            max-width: 450px;
             width: 100%;
         }
 
         .brand {
             font-family: 'Rajdhani', sans-serif;
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 700;
-            letter-spacing: 3px;
+            letter-spacing: 4px;
             color: var(--neon-red);
             text-transform: uppercase;
             margin-bottom: 20px;
         }
 
-        h2 { font-size: 18px; font-weight: 500; margin-bottom: 10px; }
-        .size { color: var(--text-muted); font-size: 14px; margin-bottom: 25px; }
+        h2 { font-size: 16px; font-weight: 500; margin-bottom: 10px; line-height: 1.4; }
+        .size { color: var(--text-muted); font-size: 13px; margin-bottom: 25px; }
 
-        .video-container, .stream-options { display: none; margin-bottom: 20px; }
-        video { width: 100%; border-radius: 12px; }
-
-        .btn-group { display: flex; gap: 10px; margin-bottom: 10px; }
-        .btn-app, .btn-main, .btn-copy {
-            padding: 14px; font-size: 14px; font-weight: 600;
-            border-radius: 8px; cursor: pointer; border: none;
-            transition: 0.3s; width: 100%;
+        /* Fix: Grid layout for buttons to prevent overlap */
+        .video-container { display: none; margin-bottom: 20px; }
+        .stream-options { display: none; margin-bottom: 20px; width: 100%; }
+        
+        .btn-group { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 8px; 
+            width: 100%;
         }
 
-        .btn-main { background: linear-gradient(45deg, var(--neon-red), #cc0030); color: white; margin-bottom: 10px; }
-        .btn-copy { background: rgba(255,255,255,0.1); color: white; }
-        .btn-app { background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); }
+        video { width: 100%; border-radius: 12px; background: #000; }
+
+        .btn-app {
+            padding: 10px 5px;
+            font-size: 12px;
+            font-weight: 600;
+            background: rgba(255,255,255,0.05);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+
+        .btn-main { 
+            padding: 15px; 
+            font-size: 15px; 
+            font-weight: 600;
+            background: linear-gradient(45deg, var(--neon-red), #cc0030); 
+            color: white; 
+            border: none; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            text-decoration: none; 
+            display: block; 
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .btn-copy { 
+            padding: 12px;
+            font-size: 14px;
+            background: rgba(255,255,255,0.05);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+        }
         
-        .btn-main:hover, .btn-copy:hover { opacity: 0.8; }
+        .btn-main:hover, .btn-copy:hover, .btn-app:hover { opacity: 0.8; }
     </style>
 </head>
 <body>
@@ -111,6 +152,7 @@
     const streamUrl = window.location.origin + "/download/{{ file_code }}"; 
     const urlWithoutScheme = streamUrl.replace(/^https?:\/\//, '');
 
+    // Media detection
     if (fileName.endsWith('.mp4') || fileName.endsWith('.webm')) {
         document.getElementById('video-container').style.display = 'block';
         document.getElementById('video-player').src = streamUrl;
