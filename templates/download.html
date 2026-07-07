@@ -180,15 +180,26 @@
     else if (fileName.endsWith('.mkv') || fileName.endsWith('.avi') || fileName.endsWith('.hevc')) {
         document.getElementById('stream-options').style.display = 'block';
         
-        // VLC Android Intent
-        document.getElementById('vlc-link').href = `intent://${urlWithoutScheme}#Intent;scheme=https;package=org.videolan.vlc;end`;
+        // Universal Android Chooser (Highly Recommended)
+        const universalIntent = `intent://${urlWithoutScheme}#Intent;scheme=https;type=video/*;action=android.intent.action.VIEW;end`;
         
-        // MX Player (Free) Intent
-        document.getElementById('mx-link').href = `intent://${urlWithoutScheme}#Intent;scheme=https;package=com.mxtech.videoplayer.ad;end`;
+        // VLC Forced Intent
+        const vlcIntent = `intent://${urlWithoutScheme}#Intent;scheme=https;type=video/*;action=android.intent.action.VIEW;package=org.videolan.vlc;end`;
+        
+        // MX Player (Free) Forced Intent
+        const mxIntent = `intent://${urlWithoutScheme}#Intent;scheme=https;type=video/*;action=android.intent.action.VIEW;package=com.mxtech.videoplayer.ad;end`;
+
+        // Update the HTML to include the Universal button
+        document.querySelector('.btn-group').innerHTML = `
+            <a href="${universalIntent}" class="btn-app" style="background: rgba(255,0,60,0.2);">📱 Choose Player</a>
+            <a href="${vlcIntent}" class="btn-app">▶️ VLC</a>
+            <a href="${mxIntent}" class="btn-app">▶️ MX</a>
+        `;
         
         document.getElementById('download-btn').innerText = 'Direct Download';
     }
 </script>
+
 
 </body>
 </html>
