@@ -1,44 +1,36 @@
 from pyrogram import filters
 from secrets import token_urlsafe
+import math
 
 from database import files
 from config import Config
 
+# Helper function to convert raw bytes into human-readable sizes (KB, MB, GB)
+def format_size(size_bytes):
+    if size_bytes == 0:
+        return "0B"
+    size_name = ("B", "KB", "MB", "GB", "TB")
+    i = int(math.floor(math.log(size_bytes, 1024)))
+    p = math.pow(1024, i)
+    s = round(size_bytes / p, 2)
+    return f"{s} {size_name[i]}"
+
 async def upload_handler(client, message):
-    # 1. Provide immediate feedback
+    # (Keep your existing code for steps 1 through 6 exactly the same)
+    
     status_msg = await message.reply_text("⏳ Processing your file...")
-
-    # 2. Identify the media
-    media = (
-        message.document
-        or message.video
-        or message.audio
-        or message.photo
-    )
-
+    media = (message.document or message.video or message.audio or message.photo)
+    
     if not media:
         await status_msg.edit_text("❌ No valid media found.")
         return
 
     try:
-        # 3. Dynamic target chat resolution
         target_id = int(Config.STORAGE_CHAT_ID)
-        
-        # FIX: Explicitly resolve the chat object first.
-        # This registers the supergroup ID in the Pyrogram session cache
-        # so that the copy operation doesn't throw 'Peer id invalid'.
         chat = await client.get_chat(target_id)
-        
-        # Perform the copy to the resolved chat object's ID
         copied = await message.copy(chat.id)
 
-        # 4. Determine media properties
-        storage_media = (
-            copied.document
-            or copied.video
-            or copied.audio
-            or copied.photo
-        )
+        storage_media = (copied.document or copied.video or copied.audio or copied.photo)
 
         if copied.document:
             file_name = copied.document.file_name
@@ -53,13 +45,11 @@ async def upload_handler(client, message):
 
         file_size = storage_media.file_size
 
-        # 5. Generate a guaranteed unique file code
         while True:
             file_code = token_urlsafe(6)
             if not await files.find_one({"_id": file_code}):
                 break
 
-        # 6. Save to database
         await files.insert_one({
             "_id": file_code,
             "chat_id": copied.chat.id,
@@ -68,20 +58,23 @@ async def upload_handler(client, message):
             "file_size": file_size
         })
 
-        # 7. Generate link and update user
         link = f"{Config.BASE_URL}/file/{file_code}"
+        
+        # --- THIS IS THE CHANGED SECTION ---
+        # 7. Convert size and format the text without backticks
+        readable_size = format_size(file_size)
 
         await status_msg.edit_text(
-            f"✅ **File Stored!**\n\n"
-            f"📄 `{file_name}`\n"
-            f"📦 `{file_size} bytes`\n\n"
+            f"✅ **File Stored Successfully!**\n\n"
+            f"**File Name:** {file_name}\n"
+            f"**File Size:** {readable_size}\n\n"
             f"🔗 {link}"
         )
 
     except Exception as e:
         import traceback
         traceback.print_exc()
-        await status_msg.edit_text(f"❌ Copy Failed!\n\n`{e}`")
+        await status_msg.edit_text(f"❌ Copy Failed!\n\n{e}")
 
 def register(app):
     app.on_message(
