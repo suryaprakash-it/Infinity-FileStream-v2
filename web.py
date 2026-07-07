@@ -1,5 +1,4 @@
 from contextlib import asynccontextmanager
-import os
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
@@ -19,15 +18,16 @@ async def lifespan(app: FastAPI):
         register_handlers(bot)
         await bot.start()
         
-        # --- WARM-UP: Verify Storage Channel ---
-        # This prevents the ValueError during uploads by caching the chat now
-        chat = await bot.get_chat(Config.STORAGE_CHAT_ID)
-        print(f"✅ Connected to storage channel: {chat.title}")
+        # Ensure STORAGE_CHAT_ID is an integer for Pyrogram resolution
+        storage_id = int(Config.STORAGE_CHAT_ID)
         
-        print("✅ Bot Started!")
+        # Warm up the session to prevent 'Peer id invalid' errors
+        chat = await bot.get_chat(storage_id)
+        print(f"✅ Successfully resolved storage channel: {chat.title}")
+        
+        print("✅ Bot Started Successfully!")
     except Exception as e:
         print(f"❌ Critical Startup Error: {e}")
-        # Raising this will stop the app from starting if the configuration is broken
         raise e
 
     yield
@@ -77,7 +77,7 @@ async def download_file(file_code: str):
         if not media:
             return {"error": "No media found in message"}
 
-        # Stream directly from Telegram without saving to local disk
+        # Stream directly from Telegram
         async def file_stream():
             async for chunk in bot.stream_media(media):
                 yield chunk
