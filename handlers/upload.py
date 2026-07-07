@@ -1,5 +1,6 @@
 from pyrogram import filters
 from secrets import token_urlsafe
+import os
 
 from database import files
 from config import Config
@@ -17,33 +18,39 @@ async def upload_handler(client, message):
     if not media:
         return
 
-    # Get correct filename and file size
-    if message.document:
-        file_name = message.document.file_name
-        file_size = message.document.file_size
+    # Copy message to storage group
+    copied = await message.copy(Config.STORAGE_CHAT_ID)
 
-    elif message.video:
-        file_name = message.video.file_name or f"{message.id}.mp4"
-        file_size = message.video.file_size
+    storage_media = (
+        copied.document
+        or copied.video
+        or copied.audio
+        or copied.photo
+    )
 
-    elif message.audio:
-        file_name = message.audio.file_name or f"{message.id}.mp3"
-        file_size = message.audio.file_size
+    if copied.document:
+        file_name = copied.document.file_name
 
-    elif message.photo:
-        file_name = f"{message.id}.jpg"
-        file_size = message.photo.file_size
+    elif copied.video:
+        file_name = copied.video.file_name or f"{copied.id}.mp4"
+
+    elif copied.audio:
+        file_name = copied.audio.file_name or f"{copied.id}.mp3"
+
+    elif copied.photo:
+        file_name = f"{copied.id}.jpg"
 
     else:
         file_name = "file"
-        file_size = 0
+
+    file_size = storage_media.file_size
 
     file_code = token_urlsafe(6)
 
     await files.insert_one({
         "_id": file_code,
-        "chat_id": message.chat.id,
-        "message_id": message.id,
+        "chat_id": copied.chat.id,
+        "message_id": copied.id,
         "file_name": file_name,
         "file_size": file_size
     })
@@ -51,7 +58,7 @@ async def upload_handler(client, message):
     link = f"{Config.BASE_URL}/file/{file_code}"
 
     await message.reply_text(
-        f"✅ File Uploaded!\n\n"
+        f"✅ File Stored!\n\n"
         f"📄 {file_name}\n"
         f"📦 {file_size} bytes\n\n"
         f"🔗 {link}"
