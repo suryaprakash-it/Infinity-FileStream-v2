@@ -17,16 +17,8 @@ async def lifespan(app: FastAPI):
     try:
         register_handlers(bot)
         await bot.start()
-        
-        print("🔄 Scanning chats to populate memory cache...")
-        # WARM-UP HACK: 
-        # By iterating through the bot's dialogs, we force Pyrogram to download 
-        # the secret access_hashes for all private groups it belongs to.
-        # This permanently fixes the 'Peer id invalid' error for private channels.
-        async for dialog in bot.get_dialogs(limit=50):
-            pass 
-            
-        print("✅ Cache Warmed! Bot Started Successfully.")
+        # Removed the get_dialogs() loop because Bots cannot use it.
+        print("✅ Bot Started Successfully!")
     except Exception as e:
         print(f"❌ Critical Startup Error: {e}")
         raise e
