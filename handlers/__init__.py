@@ -1,5 +1,5 @@
-from .start import register as register_start
-from .upload import register as register_upload
+from .start import register_handlers as register_start
+from .upload import register_handlers as register_upload
 
 def register_handlers(app):
     register_start(app)
