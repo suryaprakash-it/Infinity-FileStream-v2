@@ -4,6 +4,7 @@ from secrets import token_urlsafe
 from database import files
 from config import Config
 
+
 async def upload_handler(client, message):
 
     media = (
@@ -16,8 +17,26 @@ async def upload_handler(client, message):
     if not media:
         return
 
-    file_name = getattr(media, "file_name", "Photo")
-    file_size = media.file_size
+    # Get correct filename and file size
+    if message.document:
+        file_name = message.document.file_name
+        file_size = message.document.file_size
+
+    elif message.video:
+        file_name = message.video.file_name or f"{message.id}.mp4"
+        file_size = message.video.file_size
+
+    elif message.audio:
+        file_name = message.audio.file_name or f"{message.id}.mp3"
+        file_size = message.audio.file_size
+
+    elif message.photo:
+        file_name = f"{message.id}.jpg"
+        file_size = message.photo.file_size
+
+    else:
+        file_name = "file"
+        file_size = 0
 
     file_code = token_urlsafe(6)
 
