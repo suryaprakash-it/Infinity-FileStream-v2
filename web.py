@@ -67,16 +67,31 @@ async def file_page(request: Request, file_code: str):
 @app.get("/download/{file_code}")
 async def download_file(file_code: str):
 
-    print("STEP 1")
+    print("DOWNLOAD START")
 
-    file = await files.find_one({"_id": file_code})
+    try:
+        file = await files.find_one({"_id": file_code})
+        print(file)
 
-    print("STEP 2")
+        msg = await bot.get_messages(
+            file["chat_id"],
+            file["message_id"]
+        )
 
-    print(file)
+        print("MESSAGE =", msg)
 
-    return {
-        "chat_id": file["chat_id"],
-        "message_id": file["message_id"],
-        "file_name": file["file_name"]
-    }
+        path = await bot.download_media(msg)
+
+        print("PATH =", path)
+
+        return {
+            "path": path
+        }
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+
+        return {
+            "error": str(e)
+        }
