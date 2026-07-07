@@ -1,20 +1,39 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>{{ file_name }}</title>
+    <meta charset="UTF-8">
+    <title>Download: {{ file_name }}</title>
+    <style>
+        body { text-align: center; font-family: 'Segoe UI', Arial, sans-serif; padding: 50px; background: #f4f4f9; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: inline-block; }
+        .btn { padding: 15px 30px; font-size: 18px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn:hover { background: #0056b3; }
+        .size { color: #666; margin-bottom: 20px; }
+    </style>
 </head>
+<body>
 
-<body style="text-align:center;font-family:Arial;padding:40px">
+<div class="card">
+    <h2>{{ file_name }}</h2>
+    <p class="size" id="size-text"></p>
+    
+    <a href="/download/{{ file_code }}" class="btn" onclick="this.innerText='Downloading...'; this.style.opacity='0.6';">
+        Download Now
+    </a>
+</div>
 
-<h2>{{ file_name }}</h2>
-
-<p>{{ file_size }} bytes</p>
-
-<br>
-
-<button onclick="window.location.href='/download/{{ file_code }}'">
-Download
-</button>
+<script>
+    // Format bytes to readable format
+    const bytes = {{ file_size }};
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let val = bytes;
+    let unitIndex = 0;
+    while (val >= 1024 && unitIndex < units.length - 1) {
+        val /= 1024;
+        unitIndex++;
+    }
+    document.getElementById('size-text').innerText = val.toFixed(2) + ' ' + units[unitIndex];
+</script>
 
 </body>
 </html>
