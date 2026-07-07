@@ -3,24 +3,18 @@
 <head>
     <title>{{ file_name }}</title>
 </head>
-<body style="font-family:Arial;text-align:center;padding:50px">
 
-    <h2>{{ file_name }}</h2>
-    <p>Size: {{ file_size }} bytes</p>
+<body style="text-align:center;font-family:Arial;padding:40px">
 
-    <p>
-        <a href="/download/{{ file_code }}">
-            DOWNLOAD FILE
-        </a>
-    </p>
+<h2>{{ file_name }}</h2>
 
-    <hr>
+<p>{{ file_size }} bytes</p>
 
-    <p>
-        Debug Link:
-        <br>
-        /download/{{ file_code }}
-    </p>
+<br>
+
+<button onclick="window.location.href='/download/{{ file_code }}'">
+Download
+</button>
 
 </body>
-</html> 
+</html>
