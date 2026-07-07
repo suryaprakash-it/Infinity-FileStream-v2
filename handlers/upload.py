@@ -60,4 +60,28 @@ async def upload_handler(client, message):
 
     file_code = token_urlsafe(6)
 
-    await files.insert
+    await files.insert_one({
+        "_id": file_code,
+        "chat_id": copied.chat.id,
+        "message_id": copied.id,
+        "file_name": file_name,
+        "file_size": file_size
+    })
+
+    link = f"{Config.BASE_URL}/file/{file_code}"
+
+    await message.reply_text(
+        f"✅ File Stored!\n\n"
+        f"📄 {file_name}\n"
+        f"📦 {file_size} bytes\n\n"
+        f"🔗 {link}"
+    )
+
+
+def register(app):
+    app.on_message(
+        filters.document
+        | filters.video
+        | filters.audio
+        | filters.photo
+    )(upload_handler)
