@@ -1,6 +1,5 @@
 from pyrogram import filters
 from secrets import token_urlsafe
-import os
 
 from database import files
 from config import Config
@@ -18,8 +17,22 @@ async def upload_handler(client, message):
     if not media:
         return
 
-    # Copy message to storage group
-    copied = await message.copy(Config.STORAGE_CHAT_ID)
+    # Copy file to storage channel/group
+    try:
+        copied = await message.copy(Config.STORAGE_CHAT_ID)
+
+        print("✅ Copied Successfully")
+        print("Storage Chat ID:", copied.chat.id)
+        print("Storage Message ID:", copied.id)
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+
+        await message.reply_text(
+            f"❌ Copy Failed!\n\n{e}"
+        )
+        return
 
     storage_media = (
         copied.document
@@ -47,28 +60,4 @@ async def upload_handler(client, message):
 
     file_code = token_urlsafe(6)
 
-    await files.insert_one({
-        "_id": file_code,
-        "chat_id": copied.chat.id,
-        "message_id": copied.id,
-        "file_name": file_name,
-        "file_size": file_size
-    })
-
-    link = f"{Config.BASE_URL}/file/{file_code}"
-
-    await message.reply_text(
-        f"✅ File Stored!\n\n"
-        f"📄 {file_name}\n"
-        f"📦 {file_size} bytes\n\n"
-        f"🔗 {link}"
-    )
-
-
-def register(app):
-    app.on_message(
-        filters.document
-        | filters.video
-        | filters.audio
-        | filters.photo
-    )(upload_handler)
+    await files.insert
