@@ -98,6 +98,9 @@
             cursor: pointer;
             text-decoration: none;
             transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .btn-app:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
 
@@ -140,8 +143,7 @@
     <div class="stream-options" id="stream-options">
         <div class="stream-title">Stream without downloading</div>
         <div class="btn-group">
-            <a href="#" id="vlc-link" class="btn-app">▶️ VLC Player</a>
-            <a href="#" id="mx-link" class="btn-app">▶️ MX Player</a>
+            <!-- Dynamically populated by the script below -->
         </div>
     </div>
 
@@ -189,9 +191,9 @@
         // MX Player (Free) Forced Intent
         const mxIntent = `intent://${urlWithoutScheme}#Intent;scheme=https;type=video/*;action=android.intent.action.VIEW;package=com.mxtech.videoplayer.ad;end`;
 
-        // Update the HTML to include the Universal button
+        // Update the HTML to include the universal button alongside VLC and MX
         document.querySelector('.btn-group').innerHTML = `
-            <a href="${universalIntent}" class="btn-app" style="background: rgba(255,0,60,0.2);">📱 Choose Player</a>
+            <a href="${universalIntent}" class="btn-app" style="background: rgba(255,0,60,0.2);">📱 Choose</a>
             <a href="${vlcIntent}" class="btn-app">▶️ VLC</a>
             <a href="${mxIntent}" class="btn-app">▶️ MX</a>
         `;
@@ -199,7 +201,6 @@
         document.getElementById('download-btn').innerText = 'Direct Download';
     }
 </script>
-
 
 </body>
 </html>
